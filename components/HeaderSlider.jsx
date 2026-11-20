@@ -10,7 +10,9 @@ const HeaderSlider = () => {
       offer: "Authentic Nigerian Traditional Wear, Now in Zimbabwe",
       buttonText1: "Shop Now",
       buttonText2: "Our Story",
-      imgSrc: assets.header_headphone_image,
+      imgSrc: assets.header_couple_image,
+      imgClass: "md:h-[380px] h-64 w-auto rounded-xl object-cover shadow-lg",
+      imgAlt: "Couple in matching wine agbada, coral beads, lace and aso oke with gele",
     },
     {
       id: 2,
@@ -18,7 +20,9 @@ const HeaderSlider = () => {
       offer: "Tailored for Weddings, Owambes & Sunday Best",
       buttonText1: "Shop Men",
       buttonText2: "Explore Styles",
-      imgSrc: assets.header_playstation_image,
+      imgSrc: assets.header_agbada_kaftan_image,
+      imgClass: "md:h-[380px] h-64 w-auto rounded-xl object-cover shadow-lg",
+      imgAlt: "Dusty pink agbada with embroidered kaftan and matching fila cap",
     },
     {
       id: 3,
@@ -26,7 +30,9 @@ const HeaderSlider = () => {
       offer: "One Continent. One Culture. Many Colours.",
       buttonText1: "Shop Women",
       buttonText2: "See Lookbook",
-      imgSrc: assets.header_macbook_image,
+      imgSrc: assets.header_aso_oke_woman_image,
+      imgClass: "md:h-[380px] h-64 w-auto rounded-xl object-cover shadow-lg",
+      imgAlt: "Woman in aso oke iro and buba with matching gele and coral beads",
     },
   ];
 
@@ -73,9 +79,10 @@ const HeaderSlider = () => {
             </div>
             <div className="flex items-center flex-1 justify-center">
               <Image
-                className="md:w-72 w-48"
+                className={slide.imgClass || "md:w-72 w-48"}
                 src={slide.imgSrc}
-                alt={`Slide ${index + 1}`}
+                alt={slide.imgAlt || `Slide ${index + 1}`}
+                priority={index === 0}
               />
             </div>
           </div>
