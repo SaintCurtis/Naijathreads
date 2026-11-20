@@ -1,4 +1,5 @@
-import logo from "./logo.svg";
+import logo from "./logo.png";
+import logo_icon from "./logo_icon.png";
 import search_icon from "./search_icon.svg";
 import user_icon from "./user_icon.svg";
 import cart_icon from "./cart_icon.svg";
@@ -23,6 +24,14 @@ import star_dull_icon from "./star_dull_icon.svg";
 import header_headphone_image from "./header_headphone_image.png";
 import header_playstation_image from "./header_playstation_image.png";
 import header_macbook_image from "./header_macbook_image.png";
+import header_agbada_kaftan_image from "./header_agbada_kaftan_image.jpg";
+import header_aso_oke_woman_image from "./header_aso_oke_woman_image.jpg";
+import header_couple_image from "./header_couple_image.jpg";
+import featured_owambe_image from "./featured_owambe_image.jpg";
+import featured_everyday_image from "./featured_everyday_image.jpg";
+import featured_bigman_image from "./featured_bigman_image.jpg";
+import banner_agbada_front_image from "./banner_agbada_front_image.jpg";
+import banner_agbada_back_image from "./banner_agbada_back_image.jpg";
 import macbook_image from "./macbook_image.png";
 import bose_headphone_image from "./bose_headphone_image.png";
 import apple_earphone_image from "./apple_earphone_image.png";
@@ -49,6 +58,7 @@ import product_details_page_apple_earphone_image5 from "./product_details_page_a
 
 export const assets = {
   logo,
+  logo_icon,
   search_icon,
   user_icon,
   cart_icon,
@@ -72,6 +82,14 @@ export const assets = {
   star_dull_icon,
   header_headphone_image,
   header_playstation_image,
+  header_agbada_kaftan_image,
+  header_aso_oke_woman_image,
+  header_couple_image,
+  featured_owambe_image,
+  featured_everyday_image,
+  featured_bigman_image,
+  banner_agbada_front_image,
+  banner_agbada_back_image,
   header_macbook_image,
   macbook_image,
   bose_headphone_image,

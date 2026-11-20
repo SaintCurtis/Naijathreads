@@ -7,8 +7,8 @@ import { ClerkProvider } from "@clerk/nextjs";
 const outfit = Outfit({ subsets: ['latin'], weight: ["300", "400", "500"] })
 
 export const metadata = {
-  title: "QuickCart - GreatStack",
-  description: "E-Commerce with Next.js ",
+  title: "Naija Threads | Nigerian Traditional Wear in Zimbabwe",
+  description: "Rooted in culture. Worn with pride. Authentic Nigerian traditional wear (agbada, senator, kaftan, Ankara, aso oke and more) for Nigerians in Zimbabwe, Zimbabweans and every African bold enough to rock it.",
 };
 
 export default function RootLayout({ children }) {

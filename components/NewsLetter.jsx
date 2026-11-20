@@ -16,7 +16,7 @@ const NewsLetter = () => {
           type="email"
           placeholder="Enter your email address"
         />
-        <button className="md:px-12 px-8 h-full text-white bg-orange-600 rounded-md rounded-l-none">
+        <button className="md:px-12 px-8 h-full text-white bg-forest-600 rounded-md rounded-l-none">
           Subscribe
         </button>
       </div>

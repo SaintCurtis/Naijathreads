@@ -8,7 +8,7 @@ const Footer = () => {
     <footer>
       <div className="flex flex-col md:flex-row items-start justify-center px-6 md:px-16 lg:px-32 gap-10 py-14 border-b border-gray-500/30 text-gray-500">
         <div className="w-4/5">
-          <Image className="w-28 md:w-32" src={assets.logo} alt="Naija Threads logo" />
+          <Image className="h-12 md:h-14 w-auto" src={assets.logo} alt="Naija Threads Clothing" />
           <p className="mt-6 text-sm font-medium text-gray-700">
             Rooted in culture. Worn with pride.
           </p>
