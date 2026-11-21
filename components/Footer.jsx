@@ -50,7 +50,7 @@ const Footer = () => {
             <div className="text-sm space-y-2">
               <p>+263 00 000 0000</p>
               <p>hello@naijathreads.com</p>
-              <p>Harare, Zimbabwe</p>
+              <p>211 2nd Street Harare, Zimbabwe</p>
             </div>
           </div>
         </div>
