@@ -4,11 +4,11 @@ import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import toast from 'react-hot-toast'
 import { useAppContext } from '@/context/AppContext'
-import ProductForm from '@/components/seller/ProductForm'
-import Footer from '@/components/seller/Footer'
+import ProductForm from '@/components/admin/ProductForm'
+import Footer from '@/components/admin/Footer'
 import Loading from '@/components/Loading'
-import useAdminApi from '@/components/seller/useAdminApi'
-import StockBadge from '@/components/seller/StockBadge'
+import useAdminApi from '@/components/admin/useAdminApi'
+import StockBadge from '@/components/admin/StockBadge'
 
 const EditProduct = () => {
   const { id } = useParams()
@@ -29,7 +29,7 @@ const EditProduct = () => {
   return (
     <div className="flex-1 min-h-screen flex flex-col justify-between">
       <div className="md:p-8 p-4 space-y-6">
-        <Link href="/seller/product-list" className="text-sm text-gray-500 hover:text-gray-800">← Back to products</Link>
+        <Link href="/admin/product-list" className="text-sm text-gray-500 hover:text-gray-800">← Back to products</Link>
         {notFound ? (
           <p className="text-gray-600">This product doesn't exist any more.</p>
         ) : !product ? (
@@ -40,7 +40,7 @@ const EditProduct = () => {
               <h1 className="text-2xl font-semibold text-gray-900">Edit product</h1>
               <StockBadge stock={product.stock} archived={product.archived} />
             </div>
-            <ProductForm mode="edit" product={product} onSaved={() => router.push('/seller/product-list')} />
+            <ProductForm mode="edit" product={product} onSaved={() => router.push('/admin/product-list')} />
           </>
         )}
       </div>

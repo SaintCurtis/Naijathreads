@@ -16,12 +16,12 @@ export default function useAdminApi() {
   const get = useCallback(async (url) => {
     const { data } = await axios.get(url, { headers: await headers(), validateStatus: () => true })
     return data
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [])
 
   const post = useCallback(async (url, body) => {
     const { data } = await axios.post(url, body, { headers: await headers(), validateStatus: () => true })
     return data
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [])
 
   return { get, post }
 }

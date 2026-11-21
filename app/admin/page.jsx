@@ -4,12 +4,12 @@ import Image from 'next/image'
 import Link from 'next/link'
 import toast from 'react-hot-toast'
 import { useAppContext } from '@/context/AppContext'
-import Footer from '@/components/seller/Footer'
+import Footer from '@/components/admin/Footer'
 import Loading from '@/components/Loading'
-import useAdminApi, { money } from '@/components/seller/useAdminApi'
-import StockBadge from '@/components/seller/StockBadge'
-import StatusPill from '@/components/seller/StatusPill'
-import { ChartCard, KpiTile, RevenueChart, HBarChart, ColumnChart } from '@/components/seller/Charts'
+import useAdminApi, { money } from '@/components/admin/useAdminApi'
+import StockBadge from '@/components/admin/StockBadge'
+import StatusPill from '@/components/admin/StatusPill'
+import { ChartCard, KpiTile, RevenueChart, HBarChart, ColumnChart } from '@/components/admin/Charts'
 
 const RANGES = [
   { days: 7, label: '7 days' },
@@ -162,7 +162,7 @@ const Dashboard = () => {
                     ))}
                   </ul>
                 )}
-                <Link href="/seller/inventory" className="mt-3 text-sm font-medium text-forest-700 hover:underline self-start">
+                <Link href="/admin/inventory" className="mt-3 text-sm font-medium text-forest-700 hover:underline self-start">
                   Manage inventory →
                 </Link>
               </ChartCard>
@@ -198,7 +198,7 @@ const Dashboard = () => {
                   </table>
                 </div>
               )}
-              <Link href="/seller/orders" className="mt-3 text-sm font-medium text-forest-700 hover:underline self-start">
+              <Link href="/admin/orders" className="mt-3 text-sm font-medium text-forest-700 hover:underline self-start">
                 All orders →
               </Link>
             </ChartCard>

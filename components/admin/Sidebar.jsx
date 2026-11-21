@@ -4,11 +4,11 @@ import { usePathname } from 'next/navigation';
 import { DashboardIcon, PlusIcon, ProductsIcon, InventoryIcon, OrdersIcon } from './Icons';
 
 const menuItems = [
-    { name: 'Dashboard', path: '/seller', Icon: DashboardIcon },
-    { name: 'Add Product', path: '/seller/add-product', Icon: PlusIcon },
-    { name: 'Products', path: '/seller/product-list', Icon: ProductsIcon, match: '/seller/product-' },
-    { name: 'Inventory', path: '/seller/inventory', Icon: InventoryIcon },
-    { name: 'Orders', path: '/seller/orders', Icon: OrdersIcon },
+    { name: 'Dashboard', path: '/admin', Icon: DashboardIcon },
+    { name: 'Add Product', path: '/admin/add-product', Icon: PlusIcon },
+    { name: 'Products', path: '/admin/product-list', Icon: ProductsIcon, match: '/admin/product-' },
+    { name: 'Inventory', path: '/admin/inventory', Icon: InventoryIcon },
+    { name: 'Orders', path: '/admin/orders', Icon: OrdersIcon },
 ];
 
 const SideBar = () => {

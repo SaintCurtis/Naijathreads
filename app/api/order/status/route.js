@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import connectDB from "@/config/db";
 import Order from "@/models/Order";
-import Product from "@/models/Product";
+import { releaseStock } from "@/lib/stock";
 import requireSeller from "@/lib/requireSeller";
 import { ORDER_STATUSES } from "@/lib/constants";
 
@@ -29,7 +29,7 @@ export async function POST(request) {
 
         if (status === 'Cancelled') {
             await Promise.all(order.items.map((item) =>
-                Product.updateOne({ _id: item.product }, { $inc: { stock: item.quantity } })
+                releaseStock(item.product, item.size || null, item.quantity)
             ))
         }
 

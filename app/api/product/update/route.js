@@ -3,9 +3,11 @@ import connectDB from "@/config/db";
 import Product from "@/models/Product";
 import requireSeller from "@/lib/requireSeller";
 import { uploadImages, deleteImages } from "@/lib/cloudinary";
+import { normaliseSizes } from "@/lib/sizes";
 
 // Edit a product. FormData fields:
-//   id, name, description, category, price, offerPrice, stock
+//   id, name, description, category, price, offerPrice
+//   sizes: JSON [{ size, stock }] for sized products, or stock for one-size products
 //   keepImages: JSON array of existing image URLs to keep (in display order)
 //   images: new files to append
 export async function POST(request) {
@@ -44,7 +46,11 @@ export async function POST(request) {
         product.category = formData.get('category')
         product.price = price
         product.offerPrice = offerPrice
-        product.stock = Math.max(0, Math.floor(Number(formData.get('stock') || 0)))
+        const sizes = normaliseSizes(formData.get('sizes'))
+        product.sizes = sizes
+        product.stock = sizes.length
+            ? sizes.reduce((s, x) => s + x.stock, 0)
+            : Math.max(0, Math.floor(Number(formData.get('stock') || 0)))
         product.image = image
         await product.save()
 

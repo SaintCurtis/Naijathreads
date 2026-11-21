@@ -4,6 +4,7 @@ import axios from "axios";
 import { useRouter } from "next/navigation";
 import { createContext, useContext, useEffect, useState } from "react";
 import toast from "react-hot-toast";
+import { cartKey, parseCartKey, hasSizes, stockFor } from "@/lib/sizes";
 
 export const AppContext = createContext();
 
@@ -13,7 +14,7 @@ export const useAppContext = () => {
 
 export const AppContextProvider = (props) => {
 
-    const currency = process.env.NEXT_PUBLIC_CURRENCY
+    const currency = process.env.NEXT_PUBLIC_CURRENCY || '$'
     const router = useRouter()
 
     const { user } = useUser()
@@ -63,70 +64,76 @@ export const AppContextProvider = (props) => {
         }
     }
 
-    const addToCart = async (itemId) => {
+    // Cart keys are "productId" for one-size items and "productId::SIZE" for sized ones
+    // (see lib/sizes.js). A sized product must be added with a size.
+    const findProduct = (key) => products.find((p) => p._id === parseCartKey(key).productId)
 
-        if (!user) {
-            return toast('Please login',{
-                icon: '⚠️',
-              })
-        }
-
-        const product = products.find((p) => p._id === itemId)
-        const inStock = product?.stock ?? 0
-        const inCart = cartItems[itemId] || 0
-        if (inStock === 0) {
-            return toast.error('Sorry, this item is out of stock')
-        }
-        if (inCart >= inStock) {
-            return toast.error(`Only ${inStock} left in stock`)
-        }
-
-        let cartData = structuredClone(cartItems);
-        cartData[itemId] = inCart + 1;
-        setCartItems(cartData);
+    const saveCart = async (cartData, message) => {
+        setCartItems(cartData)
         if (user) {
             try {
                 const token = await getToken()
-                await axios.post('/api/cart/update', {cartData}, {headers:{Authorization: `Bearer ${token}`}} )
-                toast.success('Item added to cart')
+                await axios.post('/api/cart/update', { cartData }, { headers: { Authorization: `Bearer ${token}` } })
+                if (message) toast.success(message)
             } catch (error) {
                 toast.error(error.message)
             }
         }
     }
 
-    const updateCartQuantity = async (itemId, quantity) => {
+    // Returns true if the item was added
+    const addToCart = async (productId, size = null) => {
 
-        const product = products.find((p) => p._id === itemId)
-        const inStock = product?.stock ?? 0
+        if (!user) {
+            toast('Please login', { icon: '⚠️' })
+            return false
+        }
+
+        const product = products.find((p) => p._id === productId)
+        if (hasSizes(product) && !size) {
+            toast.error('Please choose a size')
+            return false
+        }
+
+        const key = cartKey(productId, hasSizes(product) ? size : null)
+        const inStock = stockFor(product, size)
+        const inCart = cartItems[key] || 0
+        if (inStock === 0) {
+            toast.error(size ? `Size ${size} is out of stock` : 'Sorry, this item is out of stock')
+            return false
+        }
+        if (inCart >= inStock) {
+            toast.error(`Only ${inStock} left${size ? ` in size ${size}` : ''}`)
+            return false
+        }
+
+        await saveCart({ ...cartItems, [key]: inCart + 1 }, 'Item added to cart')
+        return true
+    }
+
+    const updateCartQuantity = async (key, quantity) => {
+
+        const product = findProduct(key)
+        const inStock = stockFor(product, parseCartKey(key).size)
         if (quantity > inStock) {
             toast.error(inStock > 0 ? `Only ${inStock} left in stock` : 'This item is out of stock')
             quantity = inStock
         }
 
-        let cartData = structuredClone(cartItems);
-        if (quantity === 0) {
-            delete cartData[itemId];
+        const cartData = { ...cartItems }
+        if (!(quantity > 0)) {
+            delete cartData[key]
         } else {
-            cartData[itemId] = quantity;
+            cartData[key] = quantity
         }
-        setCartItems(cartData)
-        if (user) {
-            try {
-                const token = await getToken()
-                await axios.post('/api/cart/update', {cartData}, {headers:{Authorization: `Bearer ${token}`}} )
-                toast.success('Cart Updated')
-            } catch (error) {
-                toast.error(error.message)
-            }
-        }
+        await saveCart(cartData, 'Cart Updated')
     }
 
     const getCartCount = () => {
         let totalCount = 0;
-        for (const items in cartItems) {
-            if (cartItems[items] > 0) {
-                totalCount += cartItems[items];
+        for (const key in cartItems) {
+            if (cartItems[key] > 0) {
+                totalCount += cartItems[key];
             }
         }
         return totalCount;
@@ -134,10 +141,10 @@ export const AppContextProvider = (props) => {
 
     const getCartAmount = () => {
         let totalAmount = 0;
-        for (const items in cartItems) {
-            let itemInfo = products.find((product) => product._id === items);
-            if (itemInfo && cartItems[items] > 0) {
-                totalAmount += itemInfo.offerPrice * cartItems[items];
+        for (const key in cartItems) {
+            const itemInfo = findProduct(key);
+            if (itemInfo && cartItems[key] > 0) {
+                totalAmount += itemInfo.offerPrice * cartItems[key];
             }
         }
         return Math.floor(totalAmount * 100) / 100;
@@ -161,7 +168,7 @@ export const AppContextProvider = (props) => {
         products, fetchProductData,
         cartItems, setCartItems,
         addToCart, updateCartQuantity,
-        getCartCount, getCartAmount
+        getCartCount, getCartAmount, findProduct
     }
 
     return (

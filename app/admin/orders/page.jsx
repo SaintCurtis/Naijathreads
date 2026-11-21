@@ -3,11 +3,11 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import toast from "react-hot-toast";
 import { useAppContext } from "@/context/AppContext";
-import Footer from "@/components/seller/Footer";
+import Footer from "@/components/admin/Footer";
 import Loading from "@/components/Loading";
-import useAdminApi, { money } from "@/components/seller/useAdminApi";
-import StatusPill from "@/components/seller/StatusPill";
-import { SearchIcon } from "@/components/seller/Icons";
+import useAdminApi, { money } from "@/components/admin/useAdminApi";
+import StatusPill from "@/components/admin/StatusPill";
+import { SearchIcon } from "@/components/admin/Icons";
 import { ORDER_STATUSES } from "@/lib/constants";
 
 const Orders = () => {
@@ -94,7 +94,7 @@ const Orders = () => {
                                         : <div className="w-12 h-12 shrink-0 rounded-md bg-gray-100" />}
                                     <div className="min-w-0 space-y-1">
                                         <p className="font-medium text-gray-900">
-                                            {order.items.map((item) => `${item.product?.name || 'Removed product'} × ${item.quantity}`).join(", ")}
+                                            {order.items.map((item) => `${item.product?.name || 'Removed product'}${item.size ? ` (${item.size})` : ''} × ${item.quantity}`).join(", ")}
                                         </p>
                                         <p className="text-gray-500">
                                             {order.items.reduce((s, i) => s + i.quantity, 0)} item(s) · {new Date(order.date).toLocaleString()}

@@ -9,6 +9,7 @@ import { useParams } from "next/navigation";
 import Loading from "@/components/Loading";
 import { useAppContext } from "@/context/AppContext";
 import React from "react";
+import { hasSizes, sortSizes, stockFor } from "@/lib/sizes";
 
 const Product = () => {
 
@@ -18,6 +19,7 @@ const Product = () => {
 
     const [mainImage, setMainImage] = useState(null);
     const [productData, setProductData] = useState(null);
+    const [size, setSize] = useState(null);
 
     const fetchProductData = async () => {
         const product = products.find(product => product._id === id);
@@ -26,7 +28,19 @@ const Product = () => {
 
     useEffect(() => {
         fetchProductData();
-    }, [id, products.length])
+    }, [id, products])
+
+    // new product: forget the previous size choice
+    useEffect(() => { setSize(null) }, [id])
+
+    const sized = hasSizes(productData)
+    const total = stockFor(productData)
+    const left = sized ? (size ? stockFor(productData, size) : null) : total
+
+    const add = async (goToCart) => {
+        const ok = await addToCart(productData._id, size)
+        if (ok && goToCart) router.push('/cart')
+    }
 
     return productData ? (<>
         <Navbar />
@@ -92,11 +106,47 @@ const Product = () => {
                             </span>
                         )}
                     </p>
-                    <p className={`mt-2 text-sm font-medium ${(productData.stock || 0) === 0 ? 'text-red-700' : (productData.stock <= 5 ? 'text-amber-700' : 'text-forest-700')}`}>
-                        {(productData.stock || 0) === 0
-                            ? 'Out of stock'
-                            : productData.stock <= 5 ? `Only ${productData.stock} left` : 'In stock'}
-                    </p>
+                    {total === 0 ? (
+                        <p className="mt-2 text-sm font-medium text-red-700">Out of stock</p>
+                    ) : left === null ? null : (
+                        <p className={`mt-2 text-sm font-medium ${left === 0 ? 'text-red-700' : left <= 5 ? 'text-amber-700' : 'text-forest-700'}`}>
+                            {left === 0 ? `Size ${size} is out of stock` : left <= 5 ? `Only ${left} left${size ? ` in size ${size}` : ''}` : 'In stock'}
+                        </p>
+                    )}
+
+                    {sized && total > 0 && (
+                        <div className="mt-6">
+                            <div className="flex items-center justify-between max-w-md">
+                                <p className="font-medium text-gray-800">Size{size ? `: ${size}` : ''}</p>
+                                {!size && <p className="text-sm text-gray-500">Choose a size</p>}
+                            </div>
+                            <div className="flex flex-wrap gap-2 mt-3" role="radiogroup" aria-label="Size">
+                                {sortSizes(productData.sizes).map((s) => {
+                                    const out = (s.stock || 0) === 0
+                                    const active = size === s.size
+                                    return (
+                                        <button
+                                            key={s.size}
+                                            type="button"
+                                            role="radio"
+                                            aria-checked={active}
+                                            disabled={out}
+                                            title={out ? `${s.size} is sold out` : s.size}
+                                            onClick={() => setSize(s.size)}
+                                            className={`min-w-12 px-3 h-11 rounded-md border text-sm transition ${active
+                                                ? 'border-forest-700 bg-forest-700 text-white'
+                                                : out
+                                                    ? 'border-gray-200 text-gray-300 line-through cursor-not-allowed'
+                                                    : 'border-gray-300 text-gray-800 hover:border-forest-600'
+                                                }`}
+                                        >
+                                            {s.size}
+                                        </button>
+                                    )
+                                })}
+                            </div>
+                        </div>
+                    )}
                     <hr className="bg-gray-600 my-6" />
                     <div className="overflow-x-auto">
                         <table className="table-auto border-collapse w-full max-w-72">
@@ -119,7 +169,7 @@ const Product = () => {
                         </table>
                     </div>
 
-                    {(productData.stock || 0) === 0 ? (
+                    {total === 0 ? (
                         <div className="mt-10">
                             <button disabled className="w-full py-3.5 bg-gray-100 text-gray-500 cursor-not-allowed">
                                 Out of stock
@@ -127,10 +177,10 @@ const Product = () => {
                         </div>
                     ) : (
                         <div className="flex items-center mt-10 gap-4">
-                            <button onClick={() => addToCart(productData._id)} className="w-full py-3.5 bg-gray-100 text-gray-800/80 hover:bg-gray-200 transition">
+                            <button onClick={() => add(false)} className="w-full py-3.5 bg-gray-100 text-gray-800/80 hover:bg-gray-200 transition">
                                 Add to Cart
                             </button>
-                            <button onClick={() => { addToCart(productData._id); router.push(user ? '/cart' : '') }} className="w-full py-3.5 bg-forest-600 text-white hover:bg-forest-700 transition">
+                            <button onClick={() => add(true)} className="w-full py-3.5 bg-forest-600 text-white hover:bg-forest-700 transition">
                                 Buy now
                             </button>
                         </div>

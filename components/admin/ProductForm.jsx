@@ -6,6 +6,7 @@ import toast from 'react-hot-toast'
 import { assets } from '@/assets/assets'
 import { useAppContext } from '@/context/AppContext'
 import { CATEGORIES } from '@/lib/constants'
+import { SIZE_PRESETS, sortSizes } from '@/lib/sizes'
 
 const MAX_IMAGES = 4
 const input = 'outline-none md:py-2.5 py-2 px-3 rounded-md border border-gray-300 focus:border-forest-600 bg-white'
@@ -22,6 +23,9 @@ const ProductForm = ({ mode = 'add', product = null, onSaved }) => {
   const [price, setPrice] = useState('')
   const [offerPrice, setOfferPrice] = useState('')
   const [stock, setStock] = useState('')
+  const [useSizes, setUseSizes] = useState(true)
+  const [sizes, setSizes] = useState([]) // [{ size, stock }]
+  const [customSize, setCustomSize] = useState('')
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {
@@ -33,6 +37,9 @@ const ProductForm = ({ mode = 'add', product = null, onSaved }) => {
       setPrice(String(product.price))
       setOfferPrice(String(product.offerPrice))
       setStock(String(product.stock ?? 0))
+      const existing = product.sizes || []
+      setUseSizes(existing.length > 0)
+      setSizes(existing.map((s) => ({ size: s.size, stock: String(s.stock ?? 0) })))
     }
   }, [mode, product])
 
@@ -52,12 +59,26 @@ const ProductForm = ({ mode = 'add', product = null, onSaved }) => {
     setSlots(Array(MAX_IMAGES).fill(null))
     setName(''); setDescription(''); setCategory(CATEGORIES[0])
     setPrice(''); setOfferPrice(''); setStock('')
+    setUseSizes(true); setSizes([]); setCustomSize('')
   }
+
+  const hasSize = (label) => sizes.some((s) => s.size.toLowerCase() === label.toLowerCase())
+  const addSize = (label) => {
+    const clean = label.trim().slice(0, 20)
+    if (!clean || hasSize(clean)) return
+    setSizes((prev) => sortSizes([...prev, { size: clean, stock: '' }]))
+  }
+  const toggleSize = (label) =>
+    hasSize(label) ? setSizes((prev) => prev.filter((s) => s.size !== label)) : addSize(label)
+  const setSizeStock = (label, value) =>
+    setSizes((prev) => prev.map((s) => (s.size === label ? { ...s, stock: value } : s)))
+  const sizeTotal = sizes.reduce((sum, s) => sum + (Math.max(0, Math.floor(Number(s.stock) || 0))), 0)
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     if (!slots.some(Boolean)) return toast.error('Add at least one image')
     if (Number(offerPrice) > Number(price)) return toast.error('Offer price should not be higher than the price')
+    if (useSizes && sizes.length === 0) return toast.error('Add at least one size, or switch to "One size"')
 
     const formData = new FormData()
     formData.append('name', name.trim())
@@ -65,7 +86,8 @@ const ProductForm = ({ mode = 'add', product = null, onSaved }) => {
     formData.append('category', category)
     formData.append('price', price)
     formData.append('offerPrice', offerPrice)
-    formData.append('stock', stock || '0')
+    formData.append('stock', useSizes ? String(sizeTotal) : (stock || '0'))
+    formData.append('sizes', JSON.stringify(useSizes ? sizes.map((s) => ({ size: s.size, stock: Number(s.stock) || 0 })) : []))
 
     // keep the order the admin arranged: existing URLs first in their slots, then new files
     formData.append('keepImages', JSON.stringify(slots.filter((s) => s?.url).map((s) => s.url)))
@@ -149,8 +171,8 @@ const ProductForm = ({ mode = 'add', product = null, onSaved }) => {
       </section>
 
       <section className="bg-white rounded-xl border border-gray-200 p-5">
-        <p className="font-medium text-gray-900 mb-3">Pricing & stock</p>
-        <div className="grid sm:grid-cols-3 gap-4">
+        <p className="font-medium text-gray-900 mb-3">Pricing</p>
+        <div className="grid sm:grid-cols-2 gap-4">
           <div className="flex flex-col gap-1">
             <label className="text-sm text-gray-700" htmlFor="product-price">Price ({currency})</label>
             <input id="product-price" type="number" min="0" step="0.01" placeholder="0" className={input} onChange={(e) => setPrice(e.target.value)} value={price} required />
@@ -159,14 +181,83 @@ const ProductForm = ({ mode = 'add', product = null, onSaved }) => {
             <label className="text-sm text-gray-700" htmlFor="offer-price">Offer price ({currency})</label>
             <input id="offer-price" type="number" min="0" step="0.01" placeholder="0" className={input} onChange={(e) => setOfferPrice(e.target.value)} value={offerPrice} required />
           </div>
-          <div className="flex flex-col gap-1">
-            <label className="text-sm text-gray-700" htmlFor="stock">Units in stock</label>
-            <input id="stock" type="number" min="0" step="1" placeholder="0" className={input} onChange={(e) => setStock(e.target.value)} value={stock} required />
-          </div>
         </div>
         <p className="text-xs text-gray-500 mt-2 h-4">
           {discount > 0 ? `Customers see ${discount}% off.` : 'Offer price is what customers pay. Set it lower than the price to show a discount.'}
         </p>
+      </section>
+
+      <section className="bg-white rounded-xl border border-gray-200 p-5 space-y-4">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <p className="font-medium text-gray-900">Sizes & stock</p>
+            <p className="text-xs text-gray-500">Customers pick a size before adding to cart. Each size has its own stock.</p>
+          </div>
+          <div className="inline-flex rounded-lg border border-gray-200 p-1" role="group" aria-label="Sizing">
+            <button type="button" onClick={() => setUseSizes(true)} aria-pressed={useSizes}
+              className={`px-3 py-1 text-sm rounded-md ${useSizes ? 'bg-forest-700 text-white' : 'text-gray-600 hover:bg-gray-100'}`}>Has sizes</button>
+            <button type="button" onClick={() => setUseSizes(false)} aria-pressed={!useSizes}
+              className={`px-3 py-1 text-sm rounded-md ${!useSizes ? 'bg-forest-700 text-white' : 'text-gray-600 hover:bg-gray-100'}`}>One size</button>
+          </div>
+        </div>
+
+        {useSizes ? (
+          <>
+            <div>
+              <p className="text-sm text-gray-700 mb-2">Tap to add or remove sizes</p>
+              <div className="flex flex-wrap gap-2">
+                {SIZE_PRESETS.map((label) => {
+                  const on = hasSize(label)
+                  return (
+                    <button key={label} type="button" onClick={() => toggleSize(label)} aria-pressed={on}
+                      className={`min-w-12 h-9 px-3 rounded-md border text-sm transition ${on ? 'border-forest-700 bg-forest-700 text-white' : 'border-gray-300 text-gray-700 hover:border-forest-600'}`}>
+                      {on ? '✓ ' : ''}{label}
+                    </button>
+                  )
+                })}
+              </div>
+              <div className="flex items-center gap-2 mt-3">
+                <input value={customSize} onChange={(e) => setCustomSize(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addSize(customSize); setCustomSize('') } }}
+                  placeholder="Custom size, e.g. Age 4-5 or 6 yards" maxLength={20} className={`${input} flex-1 max-w-xs text-sm !py-2`} />
+                <button type="button" onClick={() => { addSize(customSize); setCustomSize('') }}
+                  className="h-9 px-4 rounded-md border border-gray-300 text-sm text-gray-700 hover:bg-gray-50">Add</button>
+              </div>
+            </div>
+
+            {sizes.length === 0 ? (
+              <p className="text-sm text-gray-500 border border-dashed border-gray-300 rounded-md px-4 py-6 text-center">No sizes yet. Pick the sizes you sell above.</p>
+            ) : (
+              <div className="rounded-md border border-gray-200 divide-y divide-gray-100">
+                <div className="grid grid-cols-[1fr_8rem_2.5rem] gap-3 px-4 py-2 text-xs uppercase tracking-wide text-gray-500 bg-gray-50">
+                  <span>Size</span><span>Units in stock</span><span />
+                </div>
+                {sizes.map((s) => (
+                  <div key={s.size} className="grid grid-cols-[1fr_8rem_2.5rem] gap-3 items-center px-4 py-2">
+                    <span className="font-medium text-gray-900">{s.size}</span>
+                    <input type="number" min="0" step="1" placeholder="0" value={s.stock}
+                      onChange={(e) => setSizeStock(s.size, e.target.value)}
+                      aria-label={`Units in stock for size ${s.size}`}
+                      className={`${input} !py-1.5 text-sm`} />
+                    <button type="button" onClick={() => toggleSize(s.size)} aria-label={`Remove size ${s.size}`}
+                      className="h-8 w-8 rounded-md text-gray-400 hover:bg-red-50 hover:text-red-700">×</button>
+                  </div>
+                ))}
+                <div className="grid grid-cols-[1fr_8rem_2.5rem] gap-3 px-4 py-2 text-sm bg-gray-50">
+                  <span className="text-gray-600">Total</span>
+                  <span className="font-medium text-gray-900 tabular-nums pl-3">{sizeTotal}</span>
+                  <span />
+                </div>
+              </div>
+            )}
+          </>
+        ) : (
+          <div className="flex flex-col gap-1 max-w-xs">
+            <label className="text-sm text-gray-700" htmlFor="stock">Units in stock</label>
+            <input id="stock" type="number" min="0" step="1" placeholder="0" className={input} onChange={(e) => setStock(e.target.value)} value={stock} required={!useSizes} />
+            <p className="text-xs text-gray-500">For items without sizes, like fabrics, caps and accessories.</p>
+          </div>
+        )}
       </section>
 
       <div className="flex items-center gap-3">

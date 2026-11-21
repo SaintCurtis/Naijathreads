@@ -4,12 +4,13 @@ import Image from "next/image";
 import Link from "next/link";
 import toast from "react-hot-toast";
 import { useAppContext } from "@/context/AppContext";
-import Footer from "@/components/seller/Footer";
+import Footer from "@/components/admin/Footer";
 import Loading from "@/components/Loading";
-import useAdminApi, { money } from "@/components/seller/useAdminApi";
-import StockBadge from "@/components/seller/StockBadge";
-import { EditIcon, TrashIcon, EyeIcon, SearchIcon } from "@/components/seller/Icons";
+import useAdminApi, { money } from "@/components/admin/useAdminApi";
+import StockBadge from "@/components/admin/StockBadge";
+import { EditIcon, TrashIcon, EyeIcon, SearchIcon } from "@/components/admin/Icons";
 import { CATEGORIES, LOW_STOCK_THRESHOLD } from "@/lib/constants";
+import { hasSizes, sortSizes } from "@/lib/sizes";
 
 const FILTERS = [
   { key: 'all', label: 'All' },
@@ -76,7 +77,7 @@ const ProductList = () => {
             <h1 className="text-2xl font-semibold text-gray-900">Products</h1>
             <p className="text-sm text-gray-500">{products.length} total · {products.filter((p) => !p.archived).length} in the store</p>
           </div>
-          <Link href="/seller/add-product" className="px-5 py-2.5 bg-forest-700 hover:bg-forest-800 text-white text-sm font-medium rounded-md">+ Add product</Link>
+          <Link href="/admin/add-product" className="px-5 py-2.5 bg-forest-700 hover:bg-forest-800 text-white text-sm font-medium rounded-md">+ Add product</Link>
         </div>
 
         {/* Filters: one row */}
@@ -123,6 +124,11 @@ const ProductList = () => {
                         <div className="min-w-0">
                           <p className="text-gray-900 font-medium truncate max-w-[16rem]">{product.name}</p>
                           <p className="text-xs text-gray-500 md:hidden">{product.category}</p>
+                          <p className="text-xs text-gray-500 truncate max-w-[16rem]">
+                            {hasSizes(product)
+                              ? sortSizes(product.sizes).map((s) => `${s.size} ${s.stock}`).join(' · ')
+                              : 'One size'}
+                          </p>
                         </div>
                       </div>
                     </td>
@@ -137,7 +143,7 @@ const ProductList = () => {
                         {!product.archived && (
                           <button onClick={() => router.push(`/product/${product._id}`)} title="View in store" className="p-2 rounded-md text-gray-500 hover:bg-gray-100 hover:text-gray-900"><EyeIcon /></button>
                         )}
-                        <button onClick={() => router.push(`/seller/product-edit/${product._id}`)} title="Edit" className="p-2 rounded-md text-gray-500 hover:bg-gray-100 hover:text-gray-900"><EditIcon /></button>
+                        <button onClick={() => router.push(`/admin/product-edit/${product._id}`)} title="Edit" className="p-2 rounded-md text-gray-500 hover:bg-gray-100 hover:text-gray-900"><EditIcon /></button>
                         {product.archived ? (
                           <button onClick={() => restore(product)} className="px-2.5 py-1.5 text-xs rounded-md border border-gray-300 hover:bg-gray-50">Restore</button>
                         ) : (

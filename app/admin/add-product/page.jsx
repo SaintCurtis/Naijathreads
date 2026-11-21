@@ -1,7 +1,7 @@
 'use client'
 import React from 'react'
-import ProductForm from '@/components/seller/ProductForm'
-import Footer from '@/components/seller/Footer'
+import ProductForm from '@/components/admin/ProductForm'
+import Footer from '@/components/admin/Footer'
 
 const AddProduct = () => (
   <div className="flex-1 min-h-screen flex flex-col justify-between">

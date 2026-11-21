@@ -5,10 +5,11 @@ import OrderSummary from "@/components/OrderSummary";
 import Image from "next/image";
 import Navbar from "@/components/Navbar";
 import { useAppContext } from "@/context/AppContext";
+import { parseCartKey } from "@/lib/sizes";
 
 const Cart = () => {
 
-  const { products, router, cartItems, addToCart, updateCartQuantity, getCartCount } = useAppContext();
+  const { router, cartItems, addToCart, updateCartQuantity, getCartCount, findProduct, currency } = useAppContext();
 
   return (
     <>
@@ -41,7 +42,8 @@ const Cart = () => {
               </thead>
               <tbody>
                 {Object.keys(cartItems).map((itemId) => {
-                  const product = products.find(product => product._id === itemId);
+                  const product = findProduct(itemId);
+                  const { size } = parseCartKey(itemId);
 
                   if (!product || cartItems[itemId] <= 0) return null;
 
@@ -60,33 +62,34 @@ const Cart = () => {
                           </div>
                           <button
                             className="md:hidden text-xs text-forest-600 mt-1"
-                            onClick={() => updateCartQuantity(product._id, 0)}
+                            onClick={() => updateCartQuantity(itemId, 0)}
                           >
                             Remove
                           </button>
                         </div>
                         <div className="text-sm hidden md:block">
                           <p className="text-gray-800">{product.name}</p>
+                          {size && <p className="text-xs text-gray-500 mt-0.5">Size: {size}</p>}
                           <button
                             className="text-xs text-forest-600 mt-1"
-                            onClick={() => updateCartQuantity(product._id, 0)}
+                            onClick={() => updateCartQuantity(itemId, 0)}
                           >
                             Remove
                           </button>
                         </div>
                       </td>
-                      <td className="py-4 md:px-4 px-1 text-gray-600">${product.offerPrice}</td>
+                      <td className="py-4 md:px-4 px-1 text-gray-600">{currency}{product.offerPrice}{size && <span className="md:hidden block text-xs text-gray-500">Size {size}</span>}</td>
                       <td className="py-4 md:px-4 px-1">
                         <div className="flex items-center md:gap-2 gap-1">
-                          <button onClick={() => updateCartQuantity(product._id, cartItems[itemId] - 1)}>
+                          <button onClick={() => updateCartQuantity(itemId, cartItems[itemId] - 1)}>
                             <Image
                               src={assets.decrease_arrow}
                               alt="decrease_arrow"
                               className="w-4 h-4"
                             />
                           </button>
-                          <input onChange={e => updateCartQuantity(product._id, Number(e.target.value))} type="number" value={cartItems[itemId]} className="w-8 border text-center appearance-none"></input>
-                          <button onClick={() => addToCart(product._id)}>
+                          <input onChange={e => updateCartQuantity(itemId, Number(e.target.value))} type="number" value={cartItems[itemId]} className="w-8 border text-center appearance-none"></input>
+                          <button onClick={() => addToCart(product._id, size)}>
                             <Image
                               src={assets.increase_arrow}
                               alt="increase_arrow"
@@ -95,7 +98,7 @@ const Cart = () => {
                           </button>
                         </div>
                       </td>
-                      <td className="py-4 md:px-4 px-1 text-gray-600">${(product.offerPrice * cartItems[itemId]).toFixed(2)}</td>
+                      <td className="py-4 md:px-4 px-1 text-gray-600">{currency}{(product.offerPrice * cartItems[itemId]).toFixed(2)}</td>
                     </tr>
                   );
                 })}

@@ -3,6 +3,7 @@ import connectDB from "@/config/db";
 import Product from "@/models/Product";
 import requireSeller from "@/lib/requireSeller";
 import { uploadImages } from "@/lib/cloudinary";
+import { normaliseSizes } from "@/lib/sizes";
 
 export async function POST(request) {
     try {
@@ -16,7 +17,11 @@ export async function POST(request) {
         const category = formData.get('category');
         const price = Number(formData.get('price'));
         const offerPrice = Number(formData.get('offerPrice'));
-        const stock = Math.max(0, Math.floor(Number(formData.get('stock') || 0)));
+        const sizes = normaliseSizes(formData.get('sizes'));
+        // sized products: total = sum of sizes; one-size products: the single count
+        const stock = sizes.length
+            ? sizes.reduce((s, x) => s + x.stock, 0)
+            : Math.max(0, Math.floor(Number(formData.get('stock') || 0)));
 
         const files = formData.getAll('images').filter((f) => f && typeof f === 'object' && f.size > 0);
 
@@ -38,6 +43,7 @@ export async function POST(request) {
             price,
             offerPrice,
             stock,
+            sizes,
             image,
             date: Date.now()
         })

@@ -8,7 +8,14 @@ const productSchema = new mongoose.Schema({
     offerPrice: { type: Number, required: true },
     image: { type: Array, required: true },
     category: { type: String, required: true },
-    // Units available to sell. Orders decrement it; cancelling an order puts it back.
+    // Per-size stock, e.g. [{ size: 'M', stock: 3 }, { size: 'L', stock: 5 }].
+    // Empty for one-size items (fabrics, caps, accessories).
+    sizes: {
+        type: [{ _id: false, size: { type: String, required: true }, stock: { type: Number, default: 0, min: 0 } }],
+        default: [],
+    },
+    // Total units available. For sized products this is always the sum of `sizes`.
+    // Orders decrement it; cancelling an order puts it back.
     stock: { type: Number, default: 0, min: 0 },
     // Archived products are hidden from the store but kept so old orders still show them.
     archived: { type: Boolean, default: false },
