@@ -14,7 +14,7 @@ const Product = () => {
 
     const { id } = useParams();
 
-    const { products, router, addToCart, user } = useAppContext()
+    const { products, router, addToCart, user, currency } = useAppContext()
 
     const [mainImage, setMainImage] = useState(null);
     const [productData, setProductData] = useState(null);
@@ -85,10 +85,17 @@ const Product = () => {
                         {productData.description}
                     </p>
                     <p className="text-3xl font-medium mt-6">
-                        ${productData.offerPrice}
-                        <span className="text-base font-normal text-gray-800/60 line-through ml-2">
-                            ${productData.price}
-                        </span>
+                        {currency}{productData.offerPrice}
+                        {productData.price > productData.offerPrice && (
+                            <span className="text-base font-normal text-gray-800/60 line-through ml-2">
+                                {currency}{productData.price}
+                            </span>
+                        )}
+                    </p>
+                    <p className={`mt-2 text-sm font-medium ${(productData.stock || 0) === 0 ? 'text-red-700' : (productData.stock <= 5 ? 'text-amber-700' : 'text-forest-700')}`}>
+                        {(productData.stock || 0) === 0
+                            ? 'Out of stock'
+                            : productData.stock <= 5 ? `Only ${productData.stock} left` : 'In stock'}
                     </p>
                     <hr className="bg-gray-600 my-6" />
                     <div className="overflow-x-auto">
@@ -112,14 +119,22 @@ const Product = () => {
                         </table>
                     </div>
 
-                    <div className="flex items-center mt-10 gap-4">
-                        <button onClick={() => addToCart(productData._id)} className="w-full py-3.5 bg-gray-100 text-gray-800/80 hover:bg-gray-200 transition">
-                            Add to Cart
-                        </button>
-                        <button onClick={() => { addToCart(productData._id); router.push(user ? '/cart' : '') }} className="w-full py-3.5 bg-forest-500 text-white hover:bg-forest-600 transition">
-                            Buy now
-                        </button>
-                    </div>
+                    {(productData.stock || 0) === 0 ? (
+                        <div className="mt-10">
+                            <button disabled className="w-full py-3.5 bg-gray-100 text-gray-500 cursor-not-allowed">
+                                Out of stock
+                            </button>
+                        </div>
+                    ) : (
+                        <div className="flex items-center mt-10 gap-4">
+                            <button onClick={() => addToCart(productData._id)} className="w-full py-3.5 bg-gray-100 text-gray-800/80 hover:bg-gray-200 transition">
+                                Add to Cart
+                            </button>
+                            <button onClick={() => { addToCart(productData._id); router.push(user ? '/cart' : '') }} className="w-full py-3.5 bg-forest-600 text-white hover:bg-forest-700 transition">
+                                Buy now
+                            </button>
+                        </div>
+                    )}
                 </div>
             </div>
             <div className="flex flex-col items-center">

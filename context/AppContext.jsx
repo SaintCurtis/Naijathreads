@@ -71,13 +71,18 @@ export const AppContextProvider = (props) => {
               })
         }
 
+        const product = products.find((p) => p._id === itemId)
+        const inStock = product?.stock ?? 0
+        const inCart = cartItems[itemId] || 0
+        if (inStock === 0) {
+            return toast.error('Sorry, this item is out of stock')
+        }
+        if (inCart >= inStock) {
+            return toast.error(`Only ${inStock} left in stock`)
+        }
+
         let cartData = structuredClone(cartItems);
-        if (cartData[itemId]) {
-            cartData[itemId] += 1;
-        }
-        else {
-            cartData[itemId] = 1;
-        }
+        cartData[itemId] = inCart + 1;
         setCartItems(cartData);
         if (user) {
             try {
@@ -91,6 +96,13 @@ export const AppContextProvider = (props) => {
     }
 
     const updateCartQuantity = async (itemId, quantity) => {
+
+        const product = products.find((p) => p._id === itemId)
+        const inStock = product?.stock ?? 0
+        if (quantity > inStock) {
+            toast.error(inStock > 0 ? `Only ${inStock} left in stock` : 'This item is out of stock')
+            quantity = inStock
+        }
 
         let cartData = structuredClone(cartItems);
         if (quantity === 0) {
@@ -124,7 +136,7 @@ export const AppContextProvider = (props) => {
         let totalAmount = 0;
         for (const items in cartItems) {
             let itemInfo = products.find((product) => product._id === items);
-            if (cartItems[items] > 0) {
+            if (itemInfo && cartItems[items] > 0) {
                 totalAmount += itemInfo.offerPrice * cartItems[items];
             }
         }

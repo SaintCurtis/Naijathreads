@@ -1,66 +1,33 @@
-import { v2 as cloudinary } from "cloudinary";
-import { getAuth } from '@clerk/nextjs/server'
-import authSeller from "@/lib/authSeller";
 import { NextResponse } from "next/server";
 import connectDB from "@/config/db";
 import Product from "@/models/Product";
-
-
-// Configure Cloudinary
-cloudinary.config({
-    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-    api_key: process.env.CLOUDINARY_API_KEY,
-    api_secret: process.env.CLOUDINARY_API_SECRET
-})
-
+import requireSeller from "@/lib/requireSeller";
+import { uploadImages } from "@/lib/cloudinary";
 
 export async function POST(request) {
     try {
-        
-        const { userId } = getAuth(request)
-
-        const isSeller = await authSeller(userId)
-
-        if (!isSeller) {
-            return NextResponse.json({ success: false, message: 'not authorized' })
-        }
+        const { userId, denied } = await requireSeller(request)
+        if (denied) return denied
 
         const formData = await request.formData()
 
         const name = formData.get('name');
         const description = formData.get('description');
         const category = formData.get('category');
-        const price = formData.get('price');
-        const offerPrice = formData.get('offerPrice');
+        const price = Number(formData.get('price'));
+        const offerPrice = Number(formData.get('offerPrice'));
+        const stock = Math.max(0, Math.floor(Number(formData.get('stock') || 0)));
 
-        const files = formData.getAll('images');
+        const files = formData.getAll('images').filter((f) => f && typeof f === 'object' && f.size > 0);
 
-        if (!files || files.length === 0) {
-            return NextResponse.json({ success: false, message: 'no files uploaded' })
+        if (files.length === 0) {
+            return NextResponse.json({ success: false, message: 'Add at least one product image' })
+        }
+        if (!(price > 0) || !(offerPrice > 0)) {
+            return NextResponse.json({ success: false, message: 'Prices must be greater than 0' })
         }
 
-        const result = await Promise.all(
-            files.map(async (file) => {
-                const arrayBuffer = await file.arrayBuffer()
-                const buffer = Buffer.from(arrayBuffer)
-
-                return new Promise((resolve,reject)=>{
-                    const stream = cloudinary.uploader.upload_stream(
-                        {resource_type: 'auto'},
-                        (error,result) => {
-                            if (error) {
-                                reject(error)
-                            } else {
-                                resolve(result)
-                            }
-                        }
-                    )
-                    stream.end(buffer)
-                })
-            })
-        )
-
-        const image = result.map(result => result.secure_url)
+        const image = await uploadImages(files)
 
         await connectDB()
         const newProduct = await Product.create({
@@ -68,16 +35,16 @@ export async function POST(request) {
             name,
             description,
             category,
-            price:Number(price),
-            offerPrice:Number(offerPrice),
+            price,
+            offerPrice,
+            stock,
             image,
             date: Date.now()
         })
 
-        return NextResponse.json({ success: true, message: 'Upload successful', newProduct })
-
+        return NextResponse.json({ success: true, message: 'Product added', newProduct })
 
     } catch (error) {
-        NextResponse.json({ success: false, message: error.message })
+        return NextResponse.json({ success: false, message: error.message })
     }
 }

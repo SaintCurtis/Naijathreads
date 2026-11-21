@@ -1,181 +1,213 @@
 'use client'
-import React, { useState } from "react";
-import { assets } from "@/assets/assets";
-import Image from "next/image";
-import { useAppContext } from "@/context/AppContext";
-import axios from "axios";
-import toast from "react-hot-toast";
+import React, { useCallback, useEffect, useState } from 'react'
+import Image from 'next/image'
+import Link from 'next/link'
+import toast from 'react-hot-toast'
+import { useAppContext } from '@/context/AppContext'
+import Footer from '@/components/seller/Footer'
+import Loading from '@/components/Loading'
+import useAdminApi, { money } from '@/components/seller/useAdminApi'
+import StockBadge from '@/components/seller/StockBadge'
+import StatusPill from '@/components/seller/StatusPill'
+import { ChartCard, KpiTile, RevenueChart, HBarChart, ColumnChart } from '@/components/seller/Charts'
 
-const AddProduct = () => {
+const RANGES = [
+  { days: 7, label: '7 days' },
+  { days: 30, label: '30 days' },
+  { days: 90, label: '90 days' },
+  { days: 365, label: '12 months' },
+]
 
-  const { getToken } = useAppContext()
+const Dashboard = () => {
+  const { currency, user } = useAppContext()
+  const { get } = useAdminApi()
+  const [days, setDays] = useState(30)
+  const [stats, setStats] = useState(null)
+  const [loading, setLoading] = useState(true)
 
-  const [files, setFiles] = useState([]);
-  const [name, setName] = useState('');
-  const [description, setDescription] = useState('');
-  const [category, setCategory] = useState('Agbada');
-  const [price, setPrice] = useState('');
-  const [offerPrice, setOfferPrice] = useState('');
+  const load = useCallback(async (d) => {
+    setLoading(true)
+    const data = await get(`/api/admin/stats?days=${d}`)
+    if (data?.success) setStats(data)
+    else toast.error(data?.message || 'Could not load stats')
+    setLoading(false)
+  }, [get])
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  useEffect(() => {
+    if (user) load(days)
+  }, [user, days, load])
 
-    const formData = new FormData()
-
-    formData.append('name',name)
-    formData.append('description',description)
-    formData.append('category',category)
-    formData.append('price',price)
-    formData.append('offerPrice',offerPrice)
-
-    for (let i = 0; i < files.length; i++) {
-      formData.append('images',files[i])
-    }
-
-    try {
-
-      const token = await getToken()
-
-      const { data } = await axios.post('/api/product/add',formData,{headers:{Authorization:`Bearer ${token}`}})
-
-      if (data.success) {
-        toast.success(data.message)
-        setFiles([]);
-        setName('');
-        setDescription('');
-        setCategory('Agbada');
-        setPrice('');
-        setOfferPrice('');
-      } else {
-        toast.error(data.message);
-      }
-
-      
-    } catch (error) {
-      toast.error(error.message)
-    }
-
-
-  };
+  const cur = currency || '$'
+  const k = stats?.kpis
 
   return (
     <div className="flex-1 min-h-screen flex flex-col justify-between">
-      <form onSubmit={handleSubmit} className="md:p-10 p-4 space-y-5 max-w-lg">
-        <div>
-          <p className="text-base font-medium">Product Image</p>
-          <div className="flex flex-wrap items-center gap-3 mt-2">
-
-            {[...Array(4)].map((_, index) => (
-              <label key={index} htmlFor={`image${index}`}>
-                <input onChange={(e) => {
-                  const updatedFiles = [...files];
-                  updatedFiles[index] = e.target.files[0];
-                  setFiles(updatedFiles);
-                }} type="file" id={`image${index}`} hidden />
-                <Image
-                  key={index}
-                  className="max-w-24 cursor-pointer"
-                  src={files[index] ? URL.createObjectURL(files[index]) : assets.upload_area}
-                  alt=""
-                  width={100}
-                  height={100}
-                />
-              </label>
+      <div className="md:p-8 p-4 space-y-6 max-w-7xl w-full">
+        {/* Header + filters, one row */}
+        <div className="flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-semibold text-gray-900">Dashboard</h1>
+            <p className="text-sm text-gray-500">Sales, orders and stock at a glance</p>
+          </div>
+          <div className="inline-flex max-w-full overflow-x-auto rounded-lg border border-gray-200 bg-white p-1" role="group" aria-label="Date range">
+            {RANGES.map((r) => (
+              <button
+                key={r.days}
+                onClick={() => setDays(r.days)}
+                aria-pressed={days === r.days}
+                className={`whitespace-nowrap px-3 py-1.5 text-sm rounded-md transition ${days === r.days ? 'bg-forest-700 text-white' : 'text-gray-600 hover:bg-gray-100'}`}
+              >
+                {r.label}
+              </button>
             ))}
-
           </div>
         </div>
-        <div className="flex flex-col gap-1 max-w-md">
-          <label className="text-base font-medium" htmlFor="product-name">
-            Product Name
-          </label>
-          <input
-            id="product-name"
-            type="text"
-            placeholder="Type here"
-            className="outline-none md:py-2.5 py-2 px-3 rounded border border-gray-500/40"
-            onChange={(e) => setName(e.target.value)}
-            value={name}
-            required
-          />
-        </div>
-        <div className="flex flex-col gap-1 max-w-md">
-          <label
-            className="text-base font-medium"
-            htmlFor="product-description"
-          >
-            Product Description
-          </label>
-          <textarea
-            id="product-description"
-            rows={4}
-            className="outline-none md:py-2.5 py-2 px-3 rounded border border-gray-500/40 resize-none"
-            placeholder="Type here"
-            onChange={(e) => setDescription(e.target.value)}
-            value={description}
-            required
-          ></textarea>
-        </div>
-        <div className="flex items-center gap-5 flex-wrap">
-          <div className="flex flex-col gap-1 w-32">
-            <label className="text-base font-medium" htmlFor="category">
-              Category
-            </label>
-            <select
-              id="category"
-              className="outline-none md:py-2.5 py-2 px-3 rounded border border-gray-500/40"
-              onChange={(e) => setCategory(e.target.value)}
-              defaultValue={category}
+
+        {!stats ? (
+          <Loading />
+        ) : (
+          <div className={`space-y-6 transition-opacity ${loading ? 'opacity-50' : ''}`}>
+            {/* KPI tiles */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+              <KpiTile label="Revenue" value={money(cur, k.revenue)} change={k.revenueChange} hint="Excludes cancelled orders" />
+              <KpiTile label="Orders" value={k.orders.toLocaleString()} change={k.ordersChange} hint={`${k.pending} waiting to ship`} />
+              <KpiTile label="Avg. order value" value={money(cur, k.aov)} change={k.aovChange} hint="Per order" />
+              <KpiTile label="Customers" value={k.customers.toLocaleString()} hint="Registered accounts" />
+            </div>
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+              <KpiTile label="Active products" value={k.products.toLocaleString()} hint="Visible in the store" />
+              <KpiTile label="Units in stock" value={k.unitsInStock.toLocaleString()} hint={`Worth ${money(cur, k.stockValue)}`} />
+              <KpiTile label="Low stock" value={k.lowStock.toLocaleString()} hint={`${stats.lowStockThreshold} or fewer left`} />
+              <KpiTile label="Out of stock" value={k.outOfStock.toLocaleString()} hint="Can't be ordered" />
+            </div>
+
+            {/* Revenue over time */}
+            <ChartCard
+              title="Revenue"
+              subtitle={`Daily revenue, last ${RANGES.find((r) => r.days === stats.days)?.label}`}
+              table={{
+                columns: [
+                  { key: 'date', label: 'Date' },
+                  { key: 'orders', label: 'Orders', align: 'right' },
+                  { key: 'revenue', label: 'Revenue', align: 'right', format: (v) => money(cur, v) },
+                ],
+                rows: stats.revenueByDay.filter((d) => d.orders > 0).reverse(),
+              }}
             >
-              <option value="Agbada">Agbada</option>
-              <option value="Senator">Senator</option>
-              <option value="Kaftan">Kaftan</option>
-              <option value="Dashiki">Dashiki</option>
-              <option value="Ankara">Ankara</option>
-              <option value="Aso Oke">Aso Oke</option>
-              <option value="Iro & Buba">Iro &amp; Buba</option>
-              <option value="Lace & Gowns">Lace &amp; Gowns</option>
-              <option value="Fabrics">Fabrics</option>
-              <option value="Caps & Gele">Caps &amp; Gele</option>
-              <option value="Accessories">Accessories</option>
-            </select>
-          </div>
-          <div className="flex flex-col gap-1 w-32">
-            <label className="text-base font-medium" htmlFor="product-price">
-              Product Price
-            </label>
-            <input
-              id="product-price"
-              type="number"
-              placeholder="0"
-              className="outline-none md:py-2.5 py-2 px-3 rounded border border-gray-500/40"
-              onChange={(e) => setPrice(e.target.value)}
-              value={price}
-              required
-            />
-          </div>
-          <div className="flex flex-col gap-1 w-32">
-            <label className="text-base font-medium" htmlFor="offer-price">
-              Offer Price
-            </label>
-            <input
-              id="offer-price"
-              type="number"
-              placeholder="0"
-              className="outline-none md:py-2.5 py-2 px-3 rounded border border-gray-500/40"
-              onChange={(e) => setOfferPrice(e.target.value)}
-              value={offerPrice}
-              required
-            />
-          </div>
-        </div>
-        <button type="submit" className="px-8 py-2.5 bg-forest-600 text-white font-medium rounded">
-          ADD
-        </button>
-      </form>
-      {/* <Footer /> */}
-    </div>
-  );
-};
+              <RevenueChart data={stats.revenueByDay} currency={cur} />
+            </ChartCard>
 
-export default AddProduct;
+            <div className="grid lg:grid-cols-2 gap-6">
+              <ChartCard
+                title="Sales by category"
+                subtitle="Revenue per category"
+                table={{
+                  columns: [
+                    { key: 'category', label: 'Category' },
+                    { key: 'revenue', label: 'Revenue', align: 'right', format: (v) => money(cur, v) },
+                  ],
+                  rows: stats.salesByCategory,
+                }}
+              >
+                <ColumnChart data={stats.salesByCategory} labelKey="category" valueKey="revenue" valueLabel="Revenue" currency={cur} />
+              </ChartCard>
+
+              <ChartCard
+                title="Orders by status"
+                subtitle="Where this period's orders are now"
+                table={{
+                  columns: [
+                    { key: 'status', label: 'Status' },
+                    { key: 'count', label: 'Orders', align: 'right' },
+                  ],
+                  rows: stats.ordersByStatus,
+                }}
+              >
+                <HBarChart data={stats.ordersByStatus} labelKey="status" valueKey="count" valueLabel="Orders" />
+              </ChartCard>
+            </div>
+
+            <div className="grid lg:grid-cols-2 gap-6">
+              <ChartCard
+                title="Top products"
+                subtitle="Best sellers by units sold"
+                table={{
+                  columns: [
+                    { key: 'name', label: 'Product' },
+                    { key: 'units', label: 'Units', align: 'right' },
+                    { key: 'revenue', label: 'Revenue', align: 'right', format: (v) => money(cur, v) },
+                  ],
+                  rows: stats.topProducts,
+                }}
+              >
+                <HBarChart data={stats.topProducts} labelKey="name" valueKey="units" valueLabel="Units sold" />
+              </ChartCard>
+
+              <ChartCard title="Needs restocking" subtitle="Out of stock first, then lowest stock">
+                {stats.attention.length === 0 ? (
+                  <p className="text-sm text-gray-500 py-8 text-center">Everything is well stocked.</p>
+                ) : (
+                  <ul className="divide-y divide-gray-100">
+                    {stats.attention.map((p) => (
+                      <li key={p._id} className="flex items-center gap-3 py-2.5">
+                        {p.image && (
+                          <Image src={p.image} alt="" width={40} height={40} className="w-10 h-10 rounded-md object-cover bg-gray-100" />
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm text-gray-900 truncate">{p.name}</p>
+                          <p className="text-xs text-gray-500">{p.category}</p>
+                        </div>
+                        <StockBadge stock={p.stock} />
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                <Link href="/seller/inventory" className="mt-3 text-sm font-medium text-forest-700 hover:underline self-start">
+                  Manage inventory →
+                </Link>
+              </ChartCard>
+            </div>
+
+            {/* Recent orders */}
+            <ChartCard title="Recent orders" subtitle="Latest orders in this period">
+              {stats.recentOrders.length === 0 ? (
+                <p className="text-sm text-gray-500 py-8 text-center">No orders yet.</p>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead className="text-left text-xs text-gray-500">
+                      <tr>
+                        <th className="py-2 font-medium">Customer</th>
+                        <th className="py-2 font-medium">Date</th>
+                        <th className="py-2 font-medium text-right">Items</th>
+                        <th className="py-2 font-medium text-right">Amount</th>
+                        <th className="py-2 font-medium pl-4">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody className="text-gray-700">
+                      {stats.recentOrders.map((o) => (
+                        <tr key={o._id} className="border-t border-gray-100">
+                          <td className="py-2.5">{o.customer}</td>
+                          <td className="py-2.5 text-gray-500">{new Date(o.date).toLocaleDateString()}</td>
+                          <td className="py-2.5 text-right tabular-nums">{o.items}</td>
+                          <td className="py-2.5 text-right tabular-nums">{money(cur, o.amount)}</td>
+                          <td className="py-2.5 pl-4"><StatusPill status={o.status} /></td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+              <Link href="/seller/orders" className="mt-3 text-sm font-medium text-forest-700 hover:underline self-start">
+                All orders →
+              </Link>
+            </ChartCard>
+          </div>
+        )}
+      </div>
+      <Footer />
+    </div>
+  )
+}
+
+export default Dashboard

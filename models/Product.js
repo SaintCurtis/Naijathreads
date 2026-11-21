@@ -8,9 +8,13 @@ const productSchema = new mongoose.Schema({
     offerPrice: { type: Number, required: true },
     image: { type: Array, required: true },
     category: { type: String, required: true },
+    // Units available to sell. Orders decrement it; cancelling an order puts it back.
+    stock: { type: Number, default: 0, min: 0 },
+    // Archived products are hidden from the store but kept so old orders still show them.
+    archived: { type: Boolean, default: false },
     date: { type: Number, required: true }
 })
 
-const Product = mongoose.models.product || mongoose.model('product',productSchema)
+const Product = mongoose.models.product || mongoose.model('product', productSchema)
 
 export default Product

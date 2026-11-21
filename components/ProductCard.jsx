@@ -20,6 +20,11 @@ const ProductCard = ({ product }) => {
                     width={800}
                     height={800}
                 />
+                {(product.stock || 0) === 0 && (
+                    <span className="absolute bottom-2 left-2 rounded-full bg-white/90 px-2.5 py-0.5 text-xs font-medium text-gray-700 shadow-sm">
+                        Out of stock
+                    </span>
+                )}
                 <button className="absolute top-2 right-2 bg-white p-2 rounded-full shadow-md">
                     <Image
                         className="h-3 w-3"
